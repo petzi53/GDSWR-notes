@@ -3,9 +3,9 @@
 # Author: Peter Baumgartner
 # Edit date: May 19, 2024
 # CONTENT:
-## - my_glance_data: glance at a specified number of random data
-## - my_qq_plot: create histogram with overlaid dnorm curve
-## - my_scatter: create scatterplot with lm and loess curve
+## - pb_glance_data: glance at a specified number of random data
+## - pb_qq_plot: create histogram with overlaid dnorm curve
+## - pb_scatter: create scatterplot with lm and loess curve
 ## - list_plotter: plot color list as a palette
 ## - save_data_file: save data file
 ## - pkgs_dl: package downloads
@@ -20,7 +20,7 @@ glossary::glossary_path("../glossary-pb/glossary.yml")
 
 
 ##########################################################
-# my_glance_data: Glance at a specified number of random data
+# pb_glance_data: Glance at a specified number of random data
 # Purpose:
   # To prevent possible bias with head()/tail() or
   # other function that print some data excerpts
@@ -32,7 +32,7 @@ glossary::glossary_path("../glossary-pb/glossary.yml")
 # N    = number of records chosen randomly
 # seed = set.seed for reproducibility
 
-my_glance_data <- function(df, N = 8, seed = 42){
+pb_glance_data <- function(df, N = 8, seed = 42){
     df_temp <- first_and_last_row(df)
 
     set.seed(seed)
@@ -69,7 +69,7 @@ first_and_last_row <-  function(df) {
 # col_dens  = character: color of density curve
 # col_dnorm = character: color of dnorm curve
 
-my_hist_dnorm <- function(df, v, n_bins = 30,
+pb_hist_dnorm <- function(df, v, n_bins = 30,
                        col_fill = "gray90",
                        col_color = "black",
                        col_dnorm = "Normal",
@@ -110,7 +110,7 @@ my_hist_dnorm <- function(df, v, n_bins = 30,
 }
 
 ##########################################################
-# my_qq_plot: Create q-q-plot
+# pb_qq_plot: Create q-q-plot
 # Purpose:
 # Generate check normality assumption
 # Author: Peter Baumgartner
@@ -127,7 +127,7 @@ my_hist_dnorm <- function(df, v, n_bins = 30,
 # line_qq.  = character: color of theoretical normal distribution
 
 
-my_qq_plot <- function(
+pb_qq_plot <- function(
         df,
         v,
         col_qq = "Data distributed",
@@ -171,7 +171,7 @@ my_qq_plot <- function(
 }
 
 ##########################################################
-# my_scatter: Create scatterplot with lm and loess curve
+# pb_scatter: Create scatterplot with lm and loess curve
 # Purpose:
 # Generate check
 # Author: Peter Baumgartner
@@ -191,7 +191,7 @@ my_qq_plot <- function(
 # col_loess = character: color of loess curve
 
 
-my_scatter <- function(
+pb_scatter <- function(
         df,
         v,
         w,
@@ -337,7 +337,7 @@ pb_save_data_file <- function(chapter_folder, object, file_name){
 
 
 ################################################################
-# pkgs_downloads: Get number of downloads from RStudio CRAN Mirror
+# pkgs_dl: Get number of downloads from RStudio CRAN Mirror
 # Purpose:
 # Compare popularity of different packages
 # Author: Peter Baumgartner
@@ -348,7 +348,7 @@ pb_save_data_file <- function(chapter_folder, object, file_name){
 # I have used the function in my notes on "Statistics with R"
 # # See: https://bookdown.org/pbaumgartner/swr-harris/
 ################################################################
-pkgs_dl <-  function(pkgs, period = "last-week", days = 7) {
+pb_pkgs_dl <-  function(pkgs, period = "last-week", days = 7) {
     dl_pkgs <- cranlogs::cran_downloads(when = period, packages = pkgs)
 
     start_date = base::min(dl_pkgs$date)

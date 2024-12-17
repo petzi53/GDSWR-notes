@@ -16,6 +16,13 @@ book:
 
   chapters:
     - index.qmd
+    - 01-intro-to-R.qmd
+    - 02-graphics-with-ggplot2.qmd
+    - 03-processing-tabular-data.qmd
+    - 04-dates-in-R.qmd
+    - 05-vector-geospatial-data.qmd
+  appendices:
+    - 90-austria-data.qmd
 
 bibliography:
     - references.bib

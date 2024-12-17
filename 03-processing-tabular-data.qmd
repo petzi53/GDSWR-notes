@@ -1,0 +1,51 @@
+# Processing Tabular Data {#sec-03}
+
+
+## Chapter 03 {.unnumbered}
+
+::::: {#obj-chap03}
+:::: {.my-objectives}
+::: {.my-objectives-header}
+Processing Tabular Data
+:::
+
+::: {.my-objectives-container}
+
+- Single Table Verbs
+    - Select and rename
+    - The pipe operator
+    - Filter
+    - Arrange
+    - Mutate and transmute
+    - Application
+- Summarizing
+    - Counts
+    - Summary functions 
+- Pivoting Data
+- Joining Tables
+- Practice
+
+
+:::
+::::
+:::::
+
+
+
+::: {.callout-note style="color: blue;" #nte-chap03}
+Since I already know quite a bit about this topic, I skipped it. There are, therefore, no notes on it.
+
+But I have two remarks:
+
+- I am going to use the native pipe, provided with R 4.1.0. This are important differences to the {**magrittr**} pipe. See 
+    - Hadley Wickham in the [Tidyverse ](https://www.tidyverse.org/blog/2023/04/base-vs-magrittr-pipe/) ("Differences between the base R and magrittr pipes"), 
+    - [Kathie Press](https://kpress.dev/blog/2022-06-19-replacing-the-magrittr-pipe-with-native-r-pipe/) ("Replacing the Magrittr Pipe With the Native R Pipe")
+    - [Geek for Geeks](https://www.geeksforgeeks.org/what-are-the-differences-between-r-s-native-pipe-and-the-magrittr-pipe/) ("What are the differences between R's native pipe `|>` and the {**magrittr**} pipe `%>%`?")
+    - [Isabella Velásquez](https://ivelasq.rbind.io/blog/understanding-the-r-pipe/) ("Understanding the native R pipe `|>`")
+    - [StackOverflow](https://stackoverflow.com/questions/67633022/what-are-the-differences-between-rs-native-pipe-and-the-magrittr-pipe) ("What are the differences between R's native pipe `|>` and the {**magrittr**} pipe `%>%`?")
+    - [Yihui Xie](https://yihui.org/en/2022/04/magrittr-native-pipe/) ("Substitute the magrittr Pipe `%>%` with R’s Native Pipe Operator `|>`")
+    - [R Bloggers](https://www.r-bloggers.com/2021/05/the-new-r-pipe/) (The new R pipe)
+    - [Statistik Dresden](https://statistik-dresden.de/r-4-1-0-base-r-pipe/) ("R 4.1.0: Base R Pipe! `|>`") in German
+- `dplyr::transmute()` is superseded because you can perform the same job with `mutate(.keep = "none")`.
+
+:::

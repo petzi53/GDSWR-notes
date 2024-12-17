@@ -1,0 +1,27 @@
+# Dates in R {#sec-04}
+
+
+## Chapter 04 {.unnumbered}
+
+::::: {#obj-chap04}
+:::: {.my-objectives}
+::: {.my-objectives-header}
+Dates in R
+:::
+
+::: {.my-objectives-container}
+
+- Converting Characters to Dates
+- Other lubridate Operators and Functions
+- Practice
+
+
+:::
+::::
+:::::
+
+
+
+::: {.callout-note style="color: blue;"}
+Since I already know quite a bit about this topic, I skipped it. There are, therefore, no notes on it.
+:::

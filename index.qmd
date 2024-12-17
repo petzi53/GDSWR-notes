@@ -15,21 +15,27 @@ WATCH OUT: This is my personal learning material and is therefore
 neither an accurate replication nor an authoritative textbook.
 :::
 
-::: my-watch-out-container
+:::
+
 I am writing this book as a text for others to read because that forces me to
 become explicit and explain all my learning outcomes more carefully.
 Please keep in mind that this text is not written by an expert but by a
 learner.
 
-Text passages with content I am already familiar I have skipped. Section
-of the original text where I needed more in-depth knowledge I have
+Text passages with content I am already familiar I have skipped. In this case I have started with chapter 5 because the chapters 1 to 4 is an introduction into using R which I am already comfortable with. 
+
+Section of the original text where I needed more in-depth knowledge I have
 elaborated and added my own comments resulted from my personal research.
 
-Be warned! In spite of replicating most of the content this Quarto book
+::: {.callout-warning}
+###### All mistakes are my own responsibility
+
+In spite of replicating most of the content this Quarto book
 may contain many mistakes. All the misapprehensions and errors are of
 course my own responsibility.
 :::
-:::
+
+
 
 ## Content and Goals of this Book {.unnumbered}
 
@@ -89,6 +95,7 @@ box).
 :::
 :::
 :::
+
 
 ### Glossary
 
@@ -170,7 +177,32 @@ text passage.
 
 ## R Code and Datasets
 
-XXX: EXPLAIN AND REWRITE DATA USAGE
+### Style guides
+
+Generally I will use the [Tidyverse Style
+Guide](https://style.tidyverse.org/) for code chunks. I am going to use underscore (`_`)
+or [snake case](https://en.wikipedia.org/wiki/Snake_case) to replace
+spaces as studies has shown that it is easier to read [@sharif2010].
+
+Additionally I will use some [Google style modifications](https://google.github.io/styleguide/Rguide.html) from the tidyverse style
+guide:
+
+-   Start the names of private functions with `pb_` (not with a dot, as recommended in the Google style guide).
+-   Don't use `base::attach()`.
+-   No right-hand assignments.
+-   Use explicit returns.
+-   Qualify namespace.
+
+### Qualifying namespace
+
+Especially the last point (qualifying namespace) is important for my
+learning. Besides preventing conflicts with functions of identical names
+from different packages it helps to learn (or remember) which function
+belongs to which package. I think this justifies the small overhead and
+helps to make R code chunks self-sufficient. (No previous package
+loading, or library calls in the setup chunk.) To foster learning the
+relation between function and package I embrace the package name with
+curly brakes and format it in bold.
 
 I am using the package name also for the default installation of base R.
 This wouldn't be necessary but it helps me to understand where the base
@@ -187,6 +219,12 @@ default:
 -   {**stats**}: The R Stats Package
 -   {**utils**}: The R Utils Package
 
+### Code linking
+
+Code linking does not work together with code annotation. I am therefore using standard comments for line numbering and explaining it in normal numbered lists after the code chunk. This is not optimal but for learning issues it is important to have link to the original documentations of the packages function.
+
+### Code snippets
+
 I am not using always the exact code snippets for my replications
 because I am not only replicating the code to see how it works but also
 to change the values of parameters to observe their influences.
@@ -198,6 +236,7 @@ When it is clear then I will follow the advice from Hadley Wickham:
 > default value of an argument, use the full name ([tidyverse style
 > guide](https://style.tidyverse.org/syntax.html)).
 
+XXX: EXPLAIN AND REWRITE DATA USAGE
 
 ## Resources
 

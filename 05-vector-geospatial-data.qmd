@@ -1,0 +1,605 @@
+---
+knitr: 
+    opts_chunk: 
+      code-fold: show
+      results: hold
+  
+---
+# Vector Geospatial Data {#sec-chap05}
+
+
+```{r}
+#| label: setup
+#| results: hold
+#| include: false
+
+base::source(file = "R/helper.R")
+ggplot2::theme_set(ggplot2::theme_bw())
+options(show.signif.stars = FALSE)
+```
+
+## Table of content for chapter 05 {.unnumbered}
+
+::::: {#obj-chap05}
+:::: {.my-objectives}
+::: {.my-objectives-header}
+Chapter section list
+:::
+
+::: {.my-objectives-container}
+
+
+
+
+:::
+::::
+:::::
+
+## Import Geospatial Data
+
+### ESRI shapefile format
+
+The data for import in chapter 5 are provided in `r glossary("ESRI")` shapefile format. This format was developed several decades ago but remains one of the widely used file formats for vector geospatial data. It is a multiple file format, where separate files contain the feature geometries, attribute table, spatial indices, and coordinate reference system.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-import-geospatial-data}
+: Import Geospatial Data
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: import-geospatial-data
+
+
+glue::glue("############### import esri data #############")
+okcounty <- sf::st_read("data/05-chap/ok_counties.shp", quiet = TRUE)
+tpoint <- sf::st_read("data/05-chap/ok_tornado_point.shp", quiet = TRUE)
+tpath <- sf::st_read("data/05-chap/ok_tornado_path.shp", quiet = TRUE)
+
+glue::glue("")
+glue::glue("############### show data class #############")
+class(okcounty)
+
+glue::glue("")
+glue::glue("############### show data with dplyr #############")
+dplyr::glimpse(okcounty)
+```
+
+
+***
+
+The {**sf**} objects contain a column called geometry. This is a special column that contains the geospatial information about the location of each feature. This column should not be modified directly. It is used by the functions in the {**sf**} package for geospatial data processing.
+
+
+
+
+::::
+:::::
+
+::: {.callout-note #nte-05-skimr}
+###### Using {skimr} with {sf}
+
+Normally I am using the `skimr::skim()` function for data summary. But for the {**sf**} data classes in the `geometry` column are no skimmers available. (Possible data types are: sfc_POINT, sfc_LINESTRING, sfc_POLYGON, sfc_MULTIPOINT, sfc_MULTILINESTRING, sfc_MULTIPOLYGON, and sfc_GEOMETRY.) In the above case the `class(okcounty$geometry)` = "*`r class(okcounty$geometry)`*" and not user-defined for {**skimr**} The fall back to the "character" class is not useful. (`sfc` stands for "simple feature list column".)
+
+It is possible to adapt {**skimr**} for working with user defined data types using `skimr::skim_with()`. Resources that explain how to do this are:
+
+- [Defining sfl’s for a package](https://docs.ropensci.org/skimr/articles/extending_skimr.html#defining-sfls-for-a-package): General article that explains how to generate and use with user defined data types. `sfl`stands for "skimr function list". It is a list-like data structure used to define custom summary statistics for specific data types.
+- [skim of {**sf**} objects](https://github.com/ropensci/skimr/issues/88): Discussion specific to the {**sf**} package.
+
+At the moment I do not understand enough about the {**sf**} package to get into more details for writing an appropriate function. I wonder if there is not already a solution available as spatial data processing with R and the {**sf**} package is not an extremely rare use case.
+:::
+
+
+In the R package {**sf**} (Simple Features), many functions are prefixed with `st_`. The `st_` prefix is inspired by [PostGIS](https://postgis.net/), which refers with the abbreviation to “spatial type”. This prefix is used consistently throughout {**sf**} to indicate that a function operates on spatial data. In the context of {**sf**}, `st_` serves as a namespace for spatial functions, allowing developers and users to easily identify and find functions related to spatial operations. This prefixing convention makes it simple to discover and use spatial functions.
+
+Looking at the file names I noticed: All files have the same filename with different extensions. There are always four files with the extensions `.dbf`, `.prj`, `.shp`, `.shx`. 
+
+The shapefiles are imported to {**sf**} objects using the `sf::st_read()` function. The `quiet = TRUE` argument suppresses output to the console when importing spatial datasets. It 
+
+An example for the output when using `quit = FALSE` (the default option) is:
+
+> Reading layer `ok_counties' from data source 
+  `/Users/petzi/Documents/Meine-Repos/GDSWR/data/05-chap/ok_counties.shp' using driver `ESRI Shapefile'  
+Simple feature collection with 77 features and 7 fields  
+Geometry type: POLYGON  
+Dimension:     XY  
+Bounding box:  xmin: -103.0025 ymin: 33.62184 xmax: -94.43151 ymax: 37.00163  
+Geodetic CRS:  NAD83
+
+To read in a shapefile, it is only necessary to specify the filename with a `.shp` extension. However, all the files, including the `.shp` file as well as the `.dbf`, `.shx`, and `.prj` files, need to be present in the directory from which the data are read.
+
+- The `ok_counties.shp` dataset contains county boundaries for the state of  Oklahoma. 
+- The `ok_tornado_point.shp` dataset and the `ok_tornado_path.shp`  dataset contain historical information about tornadoes in Oklahoma. 
+    - The points are the initial locations of tornado touchdown. 
+    - The paths are lines that identify the path of each tornado after touchdown.
+- These data were derived from larger, national-level datasets generated by the National Oceanographic and Atmospheric Administration (NOAA) [National Weather Service Storm Prediction Center](https://www.spc.noaa.gov/gis/svrgis/).
+
+### Conversion data sf <-> sp
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-data-conversion-sf-sp}
+: {**sf**} data to {**sp**} data and reverse
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: data-conversion-sf-sp
+
+glue::glue("############### convert from sf to sp data #############")
+okcounty_sp <- sf::as_Spatial(okcounty) # sf::as(okcounty, 'Spatial') does not work!
+class(okcounty_sp)
+
+glue::glue("")
+glue::glue("############### convert from sp to sf data #############")
+okcounty_sf <- sf::st_as_sf(okcounty_sp)
+class(okcounty_sf)
+```
+
+
+::::
+:::::
+
+## Creating simple maps
+
+### Draw Oklahoma county boundaries
+
+To generate a map of counties using `ggplot2::ggplot()` with a {**sf**} object, the `ggplot2::geom_sf()` function is used.
+
+From the view of the {**ggplot2**} package the `ggplot2::geom_sf()` is an unusual geom because it will draw different geometric objects depending on what simple features are present in the data: you can get points, lines, or polygons. For text and labels, you can use `ggplot2::geom_sf_text()` and `ggplot2::geom_sf_label()`.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-oklahoma-county-boundaries}
+: Oklahoma county boundaries
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-05-oklahoma-county-boundaries
+#| fig-cap: "Oklahoma county boundaries"
+
+ggplot2::ggplot(data = okcounty) +
+  ggplot2::geom_sf(fill = NA)
+```
+
+`fill = NA` makes the counties transparent.
+
+::::
+:::::
+
+### Inspect `tpoint` and `tpath`
+
+Because {**sf**} objects are a type of data frame, they can be modified using the normal {**tidyverse**} functions. Let's look at the two other R objects we've generated in @cnj-05-import-geospatial-data.
+
+::: {.my-code-collection}
+:::: {.my-code-collection-header}
+::::: {.my-code-collection-icon}
+:::::
+:::::: {#exm-05-show-tornado-file-structure}
+: Display structure of the tornado files
+::::::
+
+::::
+
+::::{.my-code-collection-container}
+
+::: {.panel-tabset}
+
+###### `tpoint`
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-glimpse-tpoint}
+: Glimpse at `tpoint`
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: glimpse-tpoint
+
+dplyr::glimpse(tpoint)
+```
+
+
+***
+
+The points are the initial locations of tornado touchdowns.
+::::
+:::::
+
+
+###### `tpath`
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-glimpse-tpath}
+: Glimpse at `tpath`
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: glimpse-tpath
+
+dplyr::glimpse(tpath)
+```
+
+***
+
+The paths are lines that identify the path of each tornado after touchdown.
+
+::::
+:::::
+
+:::
+
+::::
+:::::
+
+From `dplyr::glimpse()` we get an idea about the data structure. But we do not know the numeric span covered by the variable. This is especially important for our next task to focus on data from the last five years. We know from @exm-05-show-tornado-file-structure that the dataset starts with the year 1950 but we have no clue about the middle or end of the dataset.
+
+For this reason I have designed a special functions that returns the first and last dataset and several random data. The default number of data shown is eight but this can be changed using a second parameter.
+
+::: {.my-code-collection}
+:::: {.my-code-collection-header}
+::::: {.my-code-collection-icon}
+:::::
+:::::: {#exm-05-show-random-tornado-data}
+: Show some random tornado data, including first and last record
+::::::
+
+::::
+
+::::{.my-code-collection-container}
+
+::: {.panel-tabset}
+
+###### `tpoint`
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-show-random-tpoint-data}
+: Show random `tpoint` data
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: show-random-tpoint-data
+
+pb_glance_data(tpoint)
+```
+
+::::
+:::::
+
+
+###### `tpath`
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-show-random-tpath-data}
+: Show random `tpath` data
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: show-random-tpath-data
+
+pb_glance_data(tpath)
+```
+
+
+::::
+:::::
+
+:::
+
+::::
+:::::
+
+### Visualization of the Oklahoma tornado data (2016-2021)
+
+Because {**sf**} objects are a type of data frame, they can be modified using the normal {**tidyverse**} functions.
+
+- A reduced dataset for the years 2016-2021 and only with the columns ID (`om`), the year (`yr`), and the date (`date`) and is prepared in the first tab `reduce data`.
+- Initiation points of tornadoes in Oklahoma from 2016–2021 is shown in tab `initiation points`.
+- Tab `tornados path` shows the paths of tornadoes in Oklahoma from 2016–2021.
+- Initiation points of tornadoes in Oklahoma from 2016–2021 with years represented by the color aesthetic is in tab `color aesthetic`.
+- In the final tab `facets` you will see the initiation points of tornadoes in Oklahoma from 2016–2021 with years mapped as separate facets. 
+
+::: {.my-code-collection}
+:::: {.my-code-collection-header}
+::::: {.my-code-collection-icon}
+:::::
+:::::: {#exm-05-different-tornado-visualizations}
+: Show different visualization of the Oklahoma tornado data (2016-2021)
+::::::
+
+::::
+
+::::{.my-code-collection-container}
+
+::: {.panel-tabset}
+
+###### reduce data
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-reduce-tornado-data}
+: Filter data from 2016 to 2021 and select only three columns (ID, year and date)
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: reduce-tornado-data
+#| code-fold: show
+
+tpoint_16_21 <- tpoint |> 
+  dplyr::filter(yr >= 2016 & yr <= 2021) |> 
+  dplyr::select(om, yr, date)
+
+tpath_16_21 <- tpath |> 
+  dplyr::filter(yr >= 2016 & yr <= 2021)  |> 
+  dplyr::select(om, yr, date)
+```
+
+<center>(*For this R code chunk is no output available*)</center>
+
+::::
+:::::
+
+
+###### initiation points
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-show-tornado-initation-points}
+: Show initiation points of tornadoes in Oklahoma from 2016–2021
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-show-tornado-initation-points
+#| fig-cap: "Initiation points of tornadoes in Oklahoma from 2016–2021."
+
+ggplot2::ggplot() +
+  ggplot2::geom_sf(data = okcounty, fill = NA) +
+  ggplot2::geom_sf(data = tpoint_16_21)
+```
+
+***
+
+- Because each function maps a different dataset, the data argument must be provided in each `ggplot2::geom_sf()` function instead of in the `ggplot2::ggplot()` function. 
+- I am using as default theme the `ggplot2::theme_bw()` function (see setup chunk of this chapter) to display the map over a white background while retaining the graticules.
+
+
+
+::::
+:::::
+
+###### tornado paths
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-show-tornado-paths}
+: Show tornadoes paths in Oklahoma from 2016–2021
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-show-tornado-paths
+#| fig-cap: "Paths of tornadoes in Oklahoma from 2016-2021."
+
+ggplot2::ggplot() +                              
+  ggplot2::geom_sf(data = okcounty, fill = NA) + 
+  ggplot2::geom_sf(data = tpath_16_21,           
+          color = "red",                         
+          size = 1)                              
+```
+***
+
+To make the tornado path lines easier to see in relation to the county boundaries, they are displayed in red and their sizes are increased to be larger (size = 1) than the default line width of 0.5.
+
+
+::::
+:::::
+
+###### color aesthetic
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-tornado-with-color-aesthetic}
+: Initiation points of tornadoes in Oklahoma from 2016-2021 with years represented by the color aesthetic
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-tornado-with-color-aesthetic
+#| fig-cap: "Initiation points of tornadoes in Oklahoma from 2016-2021 with years represented by the color aesthetic."
+
+ggplot2::ggplot() +
+  ggplot2::geom_sf(data = tpoint_16_21, 
+          ggplot2::aes(color = forcats::as_factor(yr))) + # [1]
+  ggplot2::geom_sf(data = okcounty, fill = NA) +
+# ggplot2::scale_color_discrete(name = "Year") +          # [2]
+  ggokabeito::scale_color_okabe_ito(name = "Year") +      # [2]
+  ggplot2::coord_sf(datum = NA) +                         # [3]
+  ggplot2::theme_void()                                   # [3]
+```
+***
+
+To view the years of the tornadoes on the map, an aesthetic can be specified. 
+
+**Line Comment 1**: In the book the color argument is specified as `base::as.factor(yr)` so that the year is displayed as a discrete variable instead of a continuous variable. Instead of the base function I have used `forcats::as_factor(yr)`.
+
+> Compared to base R, when x is a character, this function creates levels in the order in which they appear, which will be the same on every platform. (Base R sorts in the current locale which can vary from place to place.) (from the {**forcats**)} help file).
+
+
+**Line Comment 2**: The `ggplot2::scale_color_discrete()` function is used to set the legend name. But the used (standard) color scale is not appropriate for people with color-vision deficiency (`r glossary("CVD")`). I have therefore used `ggokabeito::scale_color_okabe_ito()`.
+
+
+**Line Comment 3**: The book says that the `ggplot2::theme_void()` function removes the plot axes and labels and shows only the map. I suppose that this is not correct. `ggplot2::coord_sf(datum = NA)` removes the plot axes and labels; `ggplot2::theme_void()` removes the border frame around the graphic.
+
+
+
+
+::::
+:::::
+
+###### facets
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-tornado-initiation-points-facets}
+: Initiation points of tornadoes in Oklahoma from 2016-2021 as facet visualization
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-tornado-initiation-points-facets
+#| fig-cap: "Initiation points of tornadoes in Oklahoma from 2016-2021 with years mapped as separate facets."
+
+ggplot2::ggplot() +
+  ggplot2::geom_sf(data = okcounty, 
+          fill = NA, 
+          color = "gray") +
+  ggplot2::geom_sf(data = tpoint_16_21, size = 0.75) +
+  ggplot2::facet_wrap(ggplot2::vars(yr), ncol = 2) +
+  ggplot2::coord_sf(datum = NA) +
+  ggplot2::theme_void()
+```
+
+***
+
+Alternately, `ggplot2::facet_wrap()` can be used to display the tornadoes for each year on a separate map. In comparison to the previous tab the sizes of the points are reduced slightly from the standard `size = 1` to `size = 0.75`, so that they are better suited for the smaller maps. 
+
+::::
+:::::
+
+
+:::
+
+::::
+:::::
+
+
+::: {.callout-note #nte-too-much-horizontal-space}
+With the exception of the facet graphics there is too much horizontal space above and below the {**sf**} graphic. Is this a known problem? How to reduce the horizontal space for {**sf**} graphics plotted with {**ggplot2**}?
+:::
+
+## Overlaying Vector Datasets
+
+### A first spatial join
+
+The number of tornado points in each county can be calculated using the `sf::st_join()` function to carry out a spatial join. A spatial join with {**sf**} is different from the joinwith {**dplyr**}: `sf::st_join()` links rows from the two tables based on the spatial locations instead of their attributes. 
+
+In this case the functions compares the point coordinates of the `tpoint_16_21` dataset in its `geometry` column with the polygon coordinates from the `geometry` column of the `okcounty` dataset. It joins `tpoint_16_21` with the `geometry` row that includes the appropriate polygon from `okcounty` containing the point coordinates. 
+
+
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-spatial-join}
+: Overlaying vector datasets with a spatial join
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: spatial-join
+
+countypnt <- sf::st_join(tpoint_16_21, okcounty)  
+
+dplyr::glimpse(countypnt)
+```
+
+
+::::
+:::::
+
+### Count tornados per county
+
+Afterward, each row in `countypnt` data contains additional columns from the `okcounty` dataset that correspond to the county that the tornado with it point coordinates is within. The dataset contains one record for each tornado. 
+
+To compute the total number of tornadoes per county, `countypnt` must be grouped by the `GEOID` county code or by the county `NAME` (here by `GEOID` county code). 
+
+But before grouping and summarizing, `countypnt` must be converted from an {**sf**} object to a normal data frame using `sf::st_drop_geometry()`.
+
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-count-tornados-per-county}
+: Count tornados per county
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: count-tornados
+#| results: hold
+
+glue::glue("#### show class before `sf::st_drop_geometry()` #####")
+base::class(countypnt)
+countypnt <- sf::st_drop_geometry(countypnt)
+glue::glue("")
+glue::glue("##### show class after `sf::st_drop_geometry()` ######")
+base::class(countypnt)
+
+
+countysum <- countypnt |> 
+  dplyr::group_by(GEOID) |> 
+  dplyr::summarize(tcnt = dplyr::n())  
+
+glue::glue("")
+glue::glue("##### glimpse at the new summarized data frame` ######")
+dplyr::glimpse(countysum)
+```
+
+
+::::
+:::::
+
+### Associate polygons with tornado counts
+
+In the next step we join `okcounty` to `countysum` so that each polygon is associated with the appropriate tornado summary. 
+
+If there are between 2016-2021 several tornados per county than we get several rows.  
+But the reverse is also true: If a county has had no tornado in the years 2016-2021 this county gets `NA` as the number of tornados. 
+
+As a matter of fact a few counties had no tornadoes during 2016–2021 and are therefore missing from `countysum`, resulting in `NA` values in the joined table. In this case, we know that `NA` means zero tornadoes, so the we must replace `NA` values by zeroes. The mutate() function computes the area of each county using st_area() and then calculates the density of tornadoes per county. Density is initially in tornadoes per square meter but is converted to tornadoes per 1000 km2. The st_area() function returns a column with explicit measurement units, but these are removed using the drop_units() function for simplicity
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-join-polygons-with-tornado-counts}
+: Associate each polygon with the appropriate tornado summary
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: join-polygons-with-tornado-counts
+
+countymap <- okcounty   |>
+  dplyr::left_join(countysum, by = "GEOID")  |>        # [1]
+  dplyr::mutate(tcnt = 
+        base::ifelse(base::is.na(tcnt), 0, tcnt)) |>   # [2]
+  dplyr::mutate(area = sf::st_area(okcounty),
+         tdens = 10^3 * 10^3 * tcnt / area)   |>       # [3]
+  units::drop_units()                                  # [4]
+
+
+dplyr::glimpse(countymap)
+```
+
+***
+
+**Line comment 1**: Using `dplyr::left_join()` instead of `dplyr::inner_join()` ensures that all of the county polygons are retained in the output of the join. (`dplyr::inner_join()` only keeps observations from x that have a matching key in y, whereas `dplyr::left_join()` keeps all observations in x.)
+
+**Line comment 2**: If there are between 2016-2021 several tornados per county than we get several rows. But the reverse is also true: If a county has had no tornado in the years 2016-2021 this county gets `NA` values as the number of tornados. 
+
+As a matter of fact a few counties had no tornadoes during 2016–2021 and are therefore missing from `countysum`, resulting in `NA` values in the joined table. In this case, we know that `NA` means zero tornadoes, so the we must replace `NA` values by zeroes. I did this with the `dplyr::mutate()` function instead of `base::replace()`. Besides this approach does not need the `.` symbol of the {**magrittr**} packages (exporting into dplyr) for refering to the database (respectively its equivalent `_` for the R pipe). See for details @nte-chap03.
+
+**Line comment 3**: The second `dplyr::mutate()` function computes the area of each county using `sf::st_area()` and then calculates the density of tornadoes per county. Density is initially in tornadoes per square meter but is converted to tornadoes per 1000 km2. 
+
+**Line comment 4**: The `sf::st_area()` function returns a column with explicit measurement units, but these are removed using the `units::drop_units()` function for simplicity. For more information see the vignettes and help pages of the {**units**} package. 
+
+::::
+:::::

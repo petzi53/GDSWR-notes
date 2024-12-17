@@ -1,0 +1,37 @@
+# Graphics with {ggplot2} {#sec-02}
+
+
+## Chapter 02 {.unnumbered}
+
+::::: {#obj-chap02}
+:::: {.my-objectives}
+::: {.my-objectives-header}
+Graphics with {**ggplot2**}
+:::
+
+::: {.my-objectives-container}
+
+- Creating a Simple Plot 
+- Aesthetic Mappings 
+- Facets 
+- Geometric Objects
+- Scales
+- Themes 
+- Combining {**ggplot**} Functions
+- Other Types of Plots
+    - Scatterplots
+    - Bar charts
+    - Histograms
+    - Box plots
+- Practice
+
+
+:::
+::::
+:::::
+
+
+
+::: {.callout-note style="color: blue;"}
+Since I already know quite a bit about this topic, I skipped it. There are, therefore, no notes on it.
+:::
