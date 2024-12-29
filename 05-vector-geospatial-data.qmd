@@ -18,7 +18,6 @@ ggplot2::theme_set(ggplot2::theme_bw())
 options(show.signif.stars = FALSE)
 ```
 
-## Table of content for chapter 05 {.unnumbered}
 
 ::::: {#obj-chap05}
 :::: {.my-objectives}
@@ -28,6 +27,11 @@ Chapter section list
 
 ::: {.my-objectives-container}
 
+1. Import geospatial data: @sec-05-import-geodata
+2. Creating simple maps: @sec-05-create-maps
+3. Overlaying vector datasets: @sec-05-overlaying-vector-datasets
+4. Save spatial geodata files: @sec-05-save-geodata
+5. Choropleth maps: @sec-05-choropleth-maps
 
 
 
@@ -35,7 +39,7 @@ Chapter section list
 ::::
 :::::
 
-## Import Geospatial Data
+## Import Geospatial Data {#sec-05-import-geodata}
 
 ### ESRI shapefile format
 
@@ -141,7 +145,7 @@ class(okcounty_sf)
 ::::
 :::::
 
-## Creating simple maps
+## Creating simple maps {#sec-05-create-maps}
 
 ### Draw Oklahoma county boundaries
 
@@ -149,25 +153,86 @@ To generate a map of counties using `ggplot2::ggplot()` with a {**sf**} object, 
 
 From the view of the {**ggplot2**} package the `ggplot2::geom_sf()` is an unusual geom because it will draw different geometric objects depending on what simple features are present in the data: you can get points, lines, or polygons. For text and labels, you can use `ggplot2::geom_sf_text()` and `ggplot2::geom_sf_label()`.
 
+::: {.my-code-collection}
+:::: {.my-code-collection-header}
+::::: {.my-code-collection-icon}
+:::::
+:::::: {#exm-05-ploting-oklahoma-county-boundaries}
+: Plotting Oklahoma county boundaries
+::::::
+
+::::
+
+::::{.my-code-collection-container}
+
+::: {.panel-tabset}
+
+###### `ggplot2`
+
 :::::{.my-r-code}
 :::{.my-r-code-header}
-:::::: {#cnj-05-oklahoma-county-boundaries}
-: Oklahoma county boundaries
+:::::: {#cnj-05-oklahoma-county-boundaries-ggplot2}
+: Oklahoma county boundaries with {**ggplot2**}
 ::::::
 :::
 ::::{.my-r-code-container}
 ```{r}
-#| label: fig-05-oklahoma-county-boundaries
-#| fig-cap: "Oklahoma county boundaries"
+#| label: fig-05-oklahoma-county-boundaries-ggplot2
+#| fig-cap: "Oklahoma county boundaries plotted with {ggplot2}"
 
 ggplot2::ggplot(data = okcounty) +
-  ggplot2::geom_sf(fill = NA)
+  ggplot2::geom_sf(fill = NA) +
+  ggplot2::theme_void()
 ```
+
+***
 
 `fill = NA` makes the counties transparent.
 
+(To get the same result as in the base R approach I used `ggplot2::theme_void()` to hide the coordinates which is shown in the original book example.) 
+
 ::::
 :::::
+
+
+###### `base::plot()`
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-oklahoma-county-boundaries-base-plot}
+: Oklahoma county boundaries with `base::plot()`
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-05-oklahoma-county-boundaries-base-plot
+#| fig-cap: "Oklahoma county boundaries plotted with base::plot()"
+
+graphics::par(mar = c(0, 0, 0, 0))
+base::plot(okcounty$geometry)
+```
+
+***
+
+From R Graph Gallery I learend that I could also use bese R to plot spatial geodata. But everybody agrees that using {**ggplot2**} is the preferred approach.
+::::
+:::::
+
+:::
+
+::::
+:::::
+
+
+::: {.callout-note #nte-05-too-much-white-space}
+###### Too much space around cholorpleth map
+
+As you can see from both graphics there is ample space aorund the map. I do not know how to remove it. Therefore I wrote a [question on StackOverflow](https://stackoverflow.com/questions/79295599/remove-white-space-around-sf-ggplot2-choropleth-map). I used a simple example provide by the {**sf**} package.
+:::
+
+
+
+
 
 ### Inspect `tpoint` and `tpath`
 
@@ -488,7 +553,7 @@ Alternately, `ggplot2::facet_wrap()` can be used to display the tornadoes for ea
 With the exception of the facet graphics there is too much horizontal space above and below the {**sf**} graphic. Is this a known problem? How to reduce the horizontal space for {**sf**} graphics plotted with {**ggplot2**}?
 :::
 
-## Overlaying Vector Datasets
+## Overlaying Vector Datasets {#sec-05-overlaying-vector-datasets}
 
 ### A first spatial join
 
@@ -603,3 +668,195 @@ As a matter of fact a few counties had no tornadoes during 2016–2021 and are t
 
 ::::
 :::::
+
+## Save spatial geodata files {#sec-05-save-geodata}
+
+### ESRI format
+
+The `sf::st_write()` function can be used to save sf objects to a variety of file formats. In many cases, the function can determine the output format from the output filename extension. The following code saves the county-level tornado summaries in ESRI shapefile format. The `append = FALSE` option overwrites the shapefile if it already exists.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-save-spatial-ESRI-format}
+: Save spatial data files into ESRI format
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: save-spatial-ESRI-format
+#| eval: false
+
+sf::st_write(countymap, 
+         dsn = "data/05-chap/oktornadosum.shp", 
+         append = FALSE)
+```
+
+
+
+::::
+:::::
+
+After a message what the script does 
+
+> > Writing layer `oktornadosum' to data source 
+  `data/05-chap/oktornadosum.shp' using driver `ESRI Shapefile'
+  Writing 77 features with 10 fields and geometry type Polygon.
+
+I got for every feature (= 77 rows) a warning message emitted by the GDAL library:
+
+> Warning: GDAL Message 1: Value 1890663260.74707699 of field area of feature 0 not successfully written. Possibly due to too larger number with respect to field width
+
+It turned out that this is a [misleading warning](https://github.com/r-spatial/sf/issues/306) and that one should not use the old ESRI format but the newer and better Open Geospatial Consortium (OGC) GeoPackage format. See also [StackOverflow](https://stackoverflow.com/a/73242539/7322615) and the [answer from the {**sf**} developer](https://github.com/r-spatial/sf/issues/2368):
+
+> The general recommendation is to not use shapefiles: the format is not an open standard, it has many limitations and modern formats are available. A good alternative is GeoPackage.
+
+### GeoPackage format
+
+GeoPackage is also mentioned as an alternative in the book. The data are stored in an SQLite database that may contain one or more layers. In this example, the `delete_dsn = TRUE` argument overwrites the entire GeoPackage. Leaving this argument at its default value of `FALSE` would add a new layer to an existing database.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-save-spatial-geodata-in-GeoPackage-format}
+: Save spatial geodata in GeoPackage format
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: save-spatial-GeoPackage-format
+
+sf::st_write(countymap, 
+         dsn = "data/05-chap/oktornado.gpkg", 
+         layer = "countysum",
+         delete_dsn = TRUE)
+```
+
+
+
+::::
+:::::
+
+### GeoJSON format
+
+
+Another commonly-used open geospatial data format is GeoJSON. It is based on Javascript Object Notation (`r glossary("JSON")`), a human-readable text format that stores data in ASCII files. The layer_options argument must be set to "RFC7946 = YES" to save the data in the newest GeoJSON specification.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-save-spatial-geodata-in-GeoJSON-format}
+: Save spatial geodata in GeoJSON format
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: save-spatial-GeoJSON-format
+
+sf::st_write(obj = countymap, 
+             dsn = "data/05-chap/oktornado.geojson", 
+             layer_options = "RFC7946 = YES",
+             delete_dsn = TRUE)
+```
+
+
+
+::::
+:::::
+
+Here again I had to add `delete_dsn = TRUE` (`append = FALSE` did not work for this format!). Otherwise I would get an error message that the dataset already exists.
+
+## Choropleth Maps {#sec-05-choropleth-maps}
+
+### Filling with colors (standard)
+
+Another way to display the tornadoes is as a choropleth map, where summary statistics for each county are displayed as different colors. The county-level tornado density can be as a choropleth using the `fill` aesthetic with `ggplot2::geom_sf()`. By default, the fill colors are based on a dark-to-light blue color ramp. The `ggplot2::theme_void()` function eliminates the axes and graticules and displays only the map on a white background.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-choropleth-filled-colors}
+: Densities of tornadoes mapped as a choropleth.
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-choropleth-filled-colors
+#| fig-cap: "Densities of tornadoes in Oklahoma counties from 2016-2021 mapped as a choropleth."
+
+ggplot2::ggplot(data = countymap) +
+  ggplot2::geom_sf(ggplot2::aes(fill = tdens)) +
+  ggplot2::theme_void() +
+  ggplot2::coord_sf()
+```
+
+
+::::
+:::::
+
+### Mapping symbols
+
+To map symbols, the county polygons must first be converted to points. The `sf::st_centroid()` generates a point feature located at the centroid of each county. The `sf::st_geometry_type()` function returns the feature geometry type. Setting `by_geometry = FALSE` returns one geometry type for the entire dataset instead of for every feature.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-convert-county-polygons-to-points}
+: Convert county polygons to points
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: convert-county-polygons-to-points
+#| results: hold
+
+glue::glue("##### Return geometry type before converted to points #####")
+sf::st_geometry_type(okcounty, by_geometry = FALSE)
+
+
+############# Return the centroid of a geometry
+okcntrd = sf::st_centroid(countymap)
+
+glue::glue("")
+glue::glue("##### Return geometry type after converted to points #####")
+sf::st_geometry_type(okcntrd, by_geometry = FALSE)
+
+```
+
+
+
+::::
+:::::
+
+::: {.callout-note style="color: blue;" #nte-05-attributes-constant-warning}
+###### How to get rid of the warning?
+
+At the moment I do not know how to suppress the warning. Possible pointers to solve this problem are:
+
+- **sf GitHub**: [suppress specific warning message](https://github.com/r-spatial/sf/issues/406)
+- **Spatial Data Science**:  [Chapter 5](https://r-spatial.org/book/05-Attributes.html)
+
+> When, while manipulating geometries, attribute values are retained unmodified, support problems may arise. If we look into a simple case of replacing a county polygon with the centroid of that polygon on a dataset that has attributes, we see that R package sf issues a warning:
+>
+> *Warning: st_centroid assumes attributes are constant over geometries*
+:::
+
+The tornado counts can be mapped using the `okcentrd` dataset with the `size` aesthetic. One point is plotted for each county centroid, and the size of the point is proportional to the number of tornadoes in the county.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-choropleth-mappying-symbols}
+: Choropleth map using graduated symbols
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-choropleth-mappying-symbols
+#| fig-cap: "Numbers of tornadoes in Oklahoma counties from 2016-2021 mapped as graduated symbols."
+
+ggplot2::ggplot() +
+  ggplot2::geom_sf(data = okcntrd, ggplot2::aes(size = tcnt)) +
+  ggplot2::geom_sf(data = okcounty, fill = NA) +
+  ggplot2::theme_void()
+```
+
+
+
+::::
+:::::
+
