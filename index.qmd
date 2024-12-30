@@ -1,13 +1,10 @@
 # Preface {.unnumbered}
 
 ::: {.callout-note style="color: blue;"}
-#### This is work in progress
-
-XXX: ADD STATUS OF THIS PROJECT IN PERCENT
-
-
+#### This is work in progress: Finished about 6%
 :::
 
+The book has twelfe chapters with 267 pages (appendix and bibliography *not* included.) I skipped Chapter 1 to 4 (83 pages) because I am already familiar with their topics. The percentage is therefore calculated by notes referring to the chapters 5 to 12 (184 pages).
 
 ::: my-watch-out
 ::: my-watch-out-header
@@ -34,6 +31,7 @@ In spite of replicating most of the content this Quarto book
 may contain many mistakes. All the misapprehensions and errors are of
 course my own responsibility.
 :::
+
 
 
 
@@ -177,6 +175,58 @@ text passage.
 
 ## R Code and Datasets
 
+### Download datasets
+
+The data files used in each chapter has to be downloaded from https://doi.org/10.6084/m9.figshare.21301212. 
+
+Run the following code chunk only once (manually).
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-00-download-data-files}
+: Download Data Files
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: download-data-files
+#| results: hold
+#| code-fold: show
+#| eval: false
+
+base::source(file = "R/helper.R")
+
+## create data folder (only once, e.g., only in this chapter)
+baseURL <- here::here()
+pb_create_folder(base::paste0(baseURL, "/data"))
+
+url = "https://figshare.com/ndownloader/files/39733921"
+utils::download.file(url, base::paste0(baseURL, "/data/gdswr_data.zip"))
+utils::unzip(base::paste0(baseURL, "/data/gdswr_data.zip"), 
+             exdir = base::paste0(baseURL, "/data"))
+
+## delete .zip file
+fn <- (base::paste0(baseURL, "/data/gdswr_data.zip"))
+if (file.exists(fn)) {
+  file.remove(fn)
+}
+```
+
+<center>(*For this R code chunk is no output available*)</center>
+
+::::
+:::::
+
+::: {.callout-warning}
+
+After I tried to commit my changes, I learned that there is a file `mesodata_large.csv`  in "data/Chapter3" with 151.28 MB. This exceeds GitHub's file size limit of 100.00 MB and can't, therefore, be stored on Github the standard way.   
+
+There is the possibility to use Git Large File Storage - https://git-lfs.github.com. However, I decided against this complexity. Actually, I do not need the files of Chapter1 to Chapter4 as I skipped the starting chapters. Therefore, I could delete this file. However, I have chosen to change `.gitignore` accordingly so that this large file will not be transferred to GitHub.       
+
+:::
+
+
+
 ### Style guides
 
 Generally I will use the [Tidyverse Style
@@ -243,13 +293,19 @@ XXX: EXPLAIN AND REWRITE DATA USAGE
 ::: {.my-resource}
 ::: {.my-resource-header}
 :::::: {#lem-index-book-resources}
-: Resources used for this Quarto book
+: Resources used for Geographic Datascience with R (GDSWR)
 ::::::
 :::
 
 ::: {.my-resource-container}
+- Wimberly, M. C. (2023). [Geographic Data Science With R](https://www.amazon.com/-/de/dp/1032347716/): Visualizing and Analyzing Environmental Change (1st ed.). Chapman & Hall/CRC.
+- Wimberly, M. C. (2023). Geographic Data Science with R: Visualizing and Analyzing Environmental Change. https://bookdown.org/mcwimberly/gdswr-book/
+- Wimberly, M. C. (2022). Geographic Data Science with R [Dataset]. figshare. https://doi.org/10.6084/m9.figshare.21301212.v3
+- Dyba, K. (2024, June 26). How to load and save vector data in R. R-Spatial. https://r-spatial.org/r/2024/06/26/sf-load-save.html (additionally used for chapter 5)
 
-XXX: ADD HERE YOUR SOURCES
+
+
+
 :::
 :::
 
