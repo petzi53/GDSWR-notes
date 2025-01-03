@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 This Quarto book collects my personal notes, trials and exercises of
-Wimberly, M. C. (2023). Geographic Data Science With R: Visualizing and Analyzing Environmental Change (1st ed.). Chapman & Hall/CRC. The book is also [available online](https://bookdown.org/mcwimberly/gdswr-book/).
+Wimberly, Michael C. (2023). Geographic Data Science With R: Visualizing and Analyzing Environmental Change (1st ed.). Chapman & Hall/CRC. The book is also [available online](https://bookdown.org/mcwimberly/gdswr-book/).
 
 WATCH OUT: This is my personal learning material and is therefore
 neither an accurate replication nor an authoritative textbook.
