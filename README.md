@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Statistics With R
+# Geographic Datascience with R (GDSWR)
 
 <!-- badges: start -->
 

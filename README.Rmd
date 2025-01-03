@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Statistics With R
+# Geographic Datascience with R (GDSWR)
 
 <!-- badges: start -->
 <!-- badges: end -->
