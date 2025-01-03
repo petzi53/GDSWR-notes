@@ -196,6 +196,7 @@ From the view of the {**ggplot2**} package the `ggplot2::geom_sf()` is an unusua
 ```{r}
 #| label: fig-05-oklahoma-county-boundaries-ggplot2
 #| fig-cap: "Oklahoma county boundaries plotted with {ggplot2}"
+#| fig-height: 3
 
 ggplot2::ggplot(data = okcounty) +
   ggplot2::geom_sf(fill = NA) +
