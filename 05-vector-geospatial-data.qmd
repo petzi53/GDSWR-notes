@@ -40,9 +40,9 @@ Chapter section list
 3. Overlaying vector datasets: @sec-05-overlaying-vector-datasets
 4. Save spatial geodata files: @sec-05-save-geodata
 5. Choropleth maps: @sec-05-choropleth-maps
-6. Modifying map appearance
-7. Exporting graphics output
-8. R-spatial tutorial: @sec-05-r-spatial-tutorial
+6. Modifying map appearance: @sec-05-modify-map-appearance
+7. Exporting graphics output: @sec-05-export-graphics
+8. Resources: @sec-05-resources
 9. Practice
 
 
@@ -503,12 +503,12 @@ To make the tornado path lines easier to see in relation to the county boundarie
 
 ggplot2::ggplot() +
   ggplot2::geom_sf(data = tpoint_16_21, 
-          ggplot2::aes(color = forcats::as_factor(yr))) + # [1]
+          ggplot2::aes(color = forcats::as_factor(yr))) + # (1)
   ggplot2::geom_sf(data = okcounty, fill = NA) +
-# ggplot2::scale_color_discrete(name = "Year") +          # [2]
-  ggokabeito::scale_color_okabe_ito(name = "Year") +      # [2]
-  ggplot2::coord_sf(datum = NA) +                         # [3]
-  ggplot2::theme_void()                                   # [3]
+# ggplot2::scale_color_discrete(name = "Year") +          # (2)
+  ggokabeito::scale_color_okabe_ito(name = "Year") +      # (2)
+  ggplot2::coord_sf(datum = NA) +                         # (3)
+  ggplot2::theme_void()                                   # (3)
 ```
 ***
 
@@ -570,6 +570,22 @@ Alternately, `ggplot2::facet_wrap()` can be used to display the tornadoes for ea
 ::: {.callout-note #nte-too-much-horizontal-space}
 With the exception of the facet graphics there is too much horizontal space above and below the {**sf**} graphic. Is this a known problem? How to reduce the horizontal space for {**sf**} graphics plotted with {**ggplot2**}?
 :::
+
+:::::{.my-solution}
+:::{.my-solution-header}
+Solution: Remove empty space in maps
+:::
+::::{.my-solution-container}
+I found a solution after [posting the question in StackOverflow](https://stackoverflow.com/questions/79295599/remove-white-space-around-sf-ggplot2-choropleth-map): I need to set the figure size in the quarto chunk options so your figure has the right aspect ratio in the document. As far as I can see there are two options:
+
+- Reducing the heigt of the figure from its standard height of 5 inches. For instance to three inches with `fig-heigt: 3` in the quarto chunk option. See an example in @cnj-05-choropleth-filled-colors or @cnj-05-choropleth-mappying-symbols. (To see the chunk options together with the code I have used `echo: fenced` for these two chunks.)
+- Changing the aspect ratio from 1 to a smaller value, for instance to 3/4 with `ggplot2::theme(aspect.ratio = 3/4)`. See an example in @cnj-annex-b-zoom-europe-map.  
+
+
+
+::::
+:::::
+
 
 ## Overlaying Vector Datasets {#sec-05-overlaying-vector-datasets}
 
@@ -645,11 +661,6 @@ dplyr::glimpse(countysum)
 
 In the next step we join `okcounty` to `countysum` so that each polygon is associated with the appropriate tornado summary. 
 
-If there are between 2016-2021 several tornados per county than we get several rows.  
-But the reverse is also true: If a county has had no tornado in the years 2016-2021 this county gets `NA` as the number of tornados. 
-
-As a matter of fact a few counties had no tornadoes during 2016–2021 and are therefore missing from `countysum`, resulting in `NA` values in the joined table. In this case, we know that `NA` means zero tornadoes, so the we must replace `NA` values by zeroes. The mutate() function computes the area of each county using st_area() and then calculates the density of tornadoes per county. Density is initially in tornadoes per square meter but is converted to tornadoes per 1000 km2. The st_area() function returns a column with explicit measurement units, but these are removed using the drop_units() function for simplicity
-
 :::::{.my-r-code}
 :::{.my-r-code-header}
 :::::: {#cnj-05-join-polygons-with-tornado-counts}
@@ -661,12 +672,12 @@ As a matter of fact a few counties had no tornadoes during 2016–2021 and are t
 #| label: join-polygons-with-tornado-counts
 
 countymap <- okcounty   |>
-  dplyr::left_join(countysum, by = "GEOID")  |>        # [1]
+  dplyr::left_join(countysum, by = "GEOID")  |>        # (1)
   dplyr::mutate(tcnt = 
-        base::ifelse(base::is.na(tcnt), 0, tcnt)) |>   # [2]
+        base::ifelse(base::is.na(tcnt), 0, tcnt)) |>   # (2)
   dplyr::mutate(area = sf::st_area(okcounty),
-         tdens = 10^3 * 10^3 * tcnt / area)   |>       # [3]
-  units::drop_units()                                  # [4]
+         tdens = 10^3 * 10^3 * tcnt / area)   |>       # (3)
+  units::drop_units()                                  # (4)
 
 
 dplyr::glimpse(countymap)
@@ -680,7 +691,7 @@ dplyr::glimpse(countymap)
 
 As a matter of fact a few counties had no tornadoes during 2016–2021 and are therefore missing from `countysum`, resulting in `NA` values in the joined table. In this case, we know that `NA` means zero tornadoes, so the we must replace `NA` values by zeroes. I did this with the `dplyr::mutate()` function instead of `base::replace()`. Besides this approach does not need the `.` symbol of the {**magrittr**} packages (exporting into dplyr) for refering to the database (respectively its equivalent `_` for the R pipe). See for details @nte-chap03.
 
-**Line comment 3**: The second `dplyr::mutate()` function computes the area of each county using `sf::st_area()` and then calculates the density of tornadoes per county. Density is initially in tornadoes per square meter but is converted to tornadoes per 1000 km2. 
+**Line comment 3**: The second `dplyr::mutate()` function computes the area of each county using `sf::st_area()` and then calculates the density of tornadoes per county. Density is initially in tornadoes per square meter but is converted to tornadoes per 1000 km^2. 
 
 **Line comment 4**: The `sf::st_area()` function returns a column with explicit measurement units, but these are removed using the `units::drop_units()` function for simplicity. For more information see the vignettes and help pages of the {**units**} package. 
 
@@ -795,6 +806,9 @@ Another way to display the tornadoes is as a choropleth map, where summary stati
 ```{r}
 #| label: fig-choropleth-filled-colors
 #| fig-cap: "Densities of tornadoes in Oklahoma counties from 2016-2021 mapped as a choropleth."
+#| fig-height: 3
+#| echo: fenced
+
 
 ggplot2::ggplot(data = countymap) +
   ggplot2::geom_sf(ggplot2::aes(fill = tdens)) +
@@ -864,6 +878,8 @@ The tornado counts can be mapped using the `okcentrd` dataset with the `size` ae
 ```{r}
 #| label: fig-choropleth-mappying-symbols
 #| fig-cap: "Numbers of tornadoes in Oklahoma counties from 2016-2021 mapped as graduated symbols."
+#| fig.height: 3
+#| echo: fenced
 
 ggplot2::ggplot() +
   ggplot2::geom_sf(data = okcntrd, ggplot2::aes(size = tcnt)) +
@@ -876,303 +892,312 @@ ggplot2::ggplot() +
 ::::
 :::::
 
-## R-spatial tutorial {#sec-05-r-spatial-tutorial}
+## Modifying Map Appearance {#sec-05-modify-map-appearance}
 
-A much more complete overview about loading and saving  datasets of different formats is explained in [How to load and save vector data in R](https://r-spatial.org/r/2024/06/26/sf-load-save.html), a weblog article in [r-spatial](https://r-spatial.org/). I will follow the tutorial in this article and comment it in difference to the GDSWR book.
+### {**RColorBrewer**}: Color palettes for choropleth mapping
 
-### Getting data
-
-First of all I have to download the data to follow the tutorial.
+The {**RColorBrewer**} package provides a selection of palettes designed for choropleth mapping (Harrower and Brewer 2003). The `display_brewer_all()` function generates a chart with examples of all the available palettes (@fig-rcolorbrewer-palettes).
 
 :::::{.my-r-code}
 :::{.my-r-code-header}
-:::::: {#cnj-05-download-datar-spatial-tutorial}
-: Download data for the r-spatial tutorial
+:::::: {#cnj-05-rcolorbrewer-palettes}
+: Show color palettes of the {**RColorBrewer**} package
 ::::::
 :::
 ::::{.my-r-code-container}
 ```{r}
-#| label: donwload-data-r-spatial-tutorial
-#| eval: false
+#| label: fig-rcolorbrewer-palettes
+#| fig-cap: "Color palettes available in the RColorBrewer package."
+#| fig-height: 9
 
-##  run this code chunk only once (manually)
-baseURL = here::here()
+RColorBrewer::display.brewer.all()
+```
 
-## download data into Chapter5 folder
 
-url = "https://github.com/kadyb/sf_load_save/archive/refs/heads/main.zip"
-utils::download.file(url, base::paste0(baseURL, "/data/Chapter5/sf_load_save.zip"))
-utils::unzip(base::paste0(baseURL, "/data/Chapter5/sf_load_save.zip"),
-             exdir = base::paste0(baseURL, "/data/Chapter5"))
+::::
+:::::
+
+There are three types of ColorBrewer palettes. 
+
+1. The top group in @fig-rcolorbrewer-palettes contains sequential palettes that are suitable for mapping ordered data along numerical scales (e.g., temperatures ranging from 0 to 30 degrees C) or ordinal categories (e.g., temperatures classified as cold, warm, and hot). These sequential palettes may include a single color or multiple colors, but have no clear breaks in the scale. 
+2. The middle group in @fig-rcolorbrewer-palettes contains qualitative palettes, which use color to distinguish between different categories without implying order. 
+3. The lower group in @fig-rcolorbrewer-palettes contains divergent palettes that emphasize a specific breakpoint in the data. Divergent palettes are often used to indicate values that are above or below the mean or to highlight values that are higher or lower than zero. 
+
+More details about these palettes, including recommendations for color schemes that are most effective for different types of computer displays and for accommodating color-blind viewers, are available at [http://colorbrewer2.org](@fig-rcolorbrewer-palettes).
+
+### Specifying a color palette for continuous data
+
+Additional {**ggplot2**} functions can be added to improve the appearance of the map. 
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-specify-color-palette}
+: Specifying a color palette for continuous data with {**RColorBrewer**}
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-specify-continuous-color-palette
+#| fig-cap: "Densities of tornadoes in Oklahoma counties from 2016-2021 mapped as a choropleth with a custom palette."
+
+
+ggplot2::ggplot(data = countymap) +
+  ggplot2::geom_sf(ggplot2::aes(fill = tdens * 10^3)) + # (1)
+  ggplot2::scale_fill_distiller(                        # (2)
+    name = base::expression("Tornadoes/1000 km"^2),     # (3) 
+    palette = "YlOrRd",                                 # (4)
+    breaks = scales::extended_breaks(n = 6),            # (5)
+    direction = 1) +                                    # (6)
+  ggplot2::theme_void() +                               # (7)
+  ggplot2::theme(legend.position = "bottom")            # (8)
+```
+
+***
+
+- **Line comment 1**: In contrast to the code in the book, I had to multiply the column for the tornado densities (`tdens`) with 10^3. Otherwise I would get decimal numbers overlapping each other after moving the legend to the bottom.
+- **Line comment 2**: The `ggplot2::scale_fill_distiller()` function allows the specification of a different color ramp.
+- **Line comment 3**: The `base::expression()` function is used for specifying the name argument for `ggplot2::scale_fill_distiller()` and to add text with a superscript.
+- **Line comment 4**: In this example we have used the “YlOrRd” palette from the {**RColorBrewer**} package. As the name says it starts from yellow and goes to red.
+- **Line comment 5**: The book uses the superseded `scales::pretty_breaks()` function instead the newer `scales::breaks_pretty()` function. This standard R break algorithm is primariy useful for date/times, for numeric scales the `scales::extended_breaks()` function does a slightly better job. `n = 6` is the number of desired breaks. You may get slightly more or fewer breaks that requested. (After trying it out I learned that in this case the `n` parameter wouldn't be necessary to get the same result.
+- **Line comment 6**: The default value is `direction = -1` and produces scales from dark to light colors. We want the reverse representing lighter colors with few and dark colors with many tornados.
+- **Line comment 7**: Note that “complete” themes like `ggplot2::theme_void()` will remove any settings made by a previous `ggplot2::theme()` function. Therefore, it is necessary to call `ggplot2::theme_void()` before `ggplot2::theme()` to implement specific theme setting settings. 
+- **Line comment 8**: We moved the legend to the bottom of the map to better accomodate the longer legend title. 
+::::
+:::::
+
+
+### Specifying a color palette for discrete data
+
+The {**RColorBrewer**} palettes each contain a finite number of colors that are intended to be associated with categories in a choropleth map. Note that the `ggplot2::scale_fill_distiller()` function used to generate the color scale for the map in @fig-specify-continuous-color-palette operates a bit differently. This function takes a ColorBrewer palette and converts it to a continuous color ramp. 
+
+The next map example will show how to define categories and map each one as a distinctive color. To view the colors for a given number of categories and a specific palette, the `RColorBrewer::display.brewer.pal()` function is used with the number of categories as the first argument and the palette name as the second palette (@fig-colorbrewer-discrete-palette).
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-annex-b-colorbrewer-discrete-palette}
+: ColorBrewer discrete color palette
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-colorbrewer-discrete-palette
+#| fig-cap: "The ColorBrewer 'YlOrRd' (yellow to red) color palette with four categories."
+
+RColorBrewer::display.brewer.pal(4, "YlOrRd")
+```
+
+
+::::
+:::::
+
+
+Rather than using continuous scales for color and size, it is often recommended to aggregate the data into a small number of classes (typically 3-6). Using discrete classes makes it easier to associate each color or symbol in the map with a specific range of values. 
+
+To accomplish this step, we need to add a couple of new classified variables using `dplyr::mutate()`. The `base::cut()` function is used to split the continuous variables based on user-specified breaks. The incidence variable is split based on quantiles (i.e., percentiles) defined in the `qbrks` object. The population breaks are manually specified.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-generate-discrete-classes}
+: Generating discrete classes
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: generate-discrete-classes
+#| results: hold
+
+numclas = 4                                  # (1)
+qbrks <- seq(0, 1, length.out = numclas + 1) # (2)
+qbrks
+
+countymap <- countymap |>                     # (3)
+  dplyr::mutate(tdens_c1 = base::cut(tdens * 10^3,
+                        breaks = stats::quantile(tdens * 10^3, breaks = qbrks),
+                        include.lowest = T))
+
+base::class(countymap$tdens_c1)
+base::levels(countymap$tdens_c1)
+```
+***
+
+- **Line comment 1**: We want to create four different colors for the tornado density.
+- **Line comment 2**: Whatever the number of different colors, because of the end point to create we need to add 1 to this number.
+- **Line comment 3**: We create a new column `tdens_c1` for the break values of the tornado densities. The `tdens_c1` column is a discrete factor with 4 levels instead of a continuous numerical variable as in @fig-specify-continuous-color-palette.
+
+::::
+:::::
+
+Because the new `tdens_c1` column is a discrete factor instead of a continuous numerical variable as in @fig-specify-continuous-color-palette we are now going to use the `ggplot2::scale_fill_brewer()` function is now used instead of `ggplot2::scale_fill_distiller()`. The comma-separated numbers specify the range of tornado densities for each of the categories (Figure 5.11).
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-mapping-colors-categories}
+: Mapping densities of tornados with color categories
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-mapping-colors-categories
+#| fig-cap: "Densities of tornadoes in Oklahoma counties from 2016-2021 mapped as a choropleth with four categories with colors"
+
+ggplot2::ggplot(data = countymap) +
+  ggplot2::geom_sf(ggplot2::aes(fill = tdens_c1)) +
+  ggplot2::scale_fill_brewer(name = base::expression("Tornadoes/1000 km"^2),   
+                    palette = "YlOrRd") +
+  ggplot2::theme_void() +
+  ggplot2::theme(legend.position = "bottom") 
+```
+
+
+::::
+:::::
+
+### Specifying graduate symbols with categories
+
+Similar to choropleth maps, graduated symbol maps are often easier to interpret if they include a limited number of symbol sizes. To generate a classified map of tornado counts, they are converted to discrete categories using the `base::cut()` function. Instead of using quantiles, the breakpoints for the classification are selected manually and stored in the `brkpts` vector.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-mapping-symbols-categories}
+: Generating discrete classes for symbol mapping
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: mapping-symbols-categories
+
+maxcnt <- max(okcntrd$tcnt)
+brkpts <- c(0, 2, 5, 10, maxcnt)
+okcntrd <- okcntrd |> 
+  dplyr::mutate(tcnt_c1 = base::cut(tcnt,
+                        breaks = brkpts,
+                        include.lowest = TRUE)
+                )
+
+base::levels(okcntrd$tcnt_c1)
+
 ```
 
 ::::
 :::::
 
-### Loading Shapefile (.shp)
+The resulting map has four symbol sizes, each associated with a specific range of tornado counts.
 
-It consists of several files (e.g., .shp, .shx, .dbf, .prj) that must be present in the same folder. [Wikipedia](https://en.wikipedia.org/wiki/Shapefile) has more details about this format. But this file format has [many limitations](http://switchfromshapefile.org/) and shouldn't be used anymore.
-
-Instead of using the `base::getwd()` and `base::setwd()` commands I am using `here::here()`, because it will always locate the files relative to the project root. 
 
 :::::{.my-r-code}
 :::{.my-r-code-header}
-:::::: {#cnj-05-load-shape-file}
-: Load Shapefile
+:::::: {#cnj-05-mapping-symbols-categories}
+: Mapping densities of tornados with symbol categories
 ::::::
 :::
 ::::{.my-r-code-container}
 ```{r}
-#| label: load-shape-file
+#| label: fig-mapping-symbols-categories
+#| fig-cap: "Densities of tornadoes in Oklahoma counties from 2016-2021 mapped as a choropleth with four categories with symbols."
 
-## get path of r-spatial data
-r_spatial_path = base::paste0(here::here(), "/data/Chapter5/sf_load_save-main/data/")
+ggplot2::ggplot(data = okcntrd) +
+  ggplot2::geom_sf(ggplot2::aes(size = tcnt_c1)) +
+  ggplot2::scale_size_discrete(name = "Tornados") +
+  ggplot2::geom_sf(data = okcounty, fill = NA) +
+  ggplot2::theme_void() +
+  ggplot2::theme(legend.position = "bottom")
+```
 
-## load and display the shapefile
 
-(
-  countries = sf::read_sf(paste0(r_spatial_path, "countries/countries.shp"))
-)
 
+::::
+:::::
+
+
+::: {.callout-warning #wrn-size-not-for-discrete-vars}
+###### Should I get rid of the warning?
+
+In @fig-mapping-symbols-categories we got the warning "Using size for a discrete variable is not advised." There are [two different opinions](https://stackoverflow.com/questions/50211624/why-and-when-using-size-for-a-discrete-variable-is-not-advised) about this warning:
+
+1. It is just "a design tip to be broken when necessary". "… this warning is paternalistic and preachey. It has no place in a code warning, it is a style recommendation."
+2. "Using size to map a non-ordinal categorical variable may suggest an ordinal relationship to the viewer, when none was intended. I find that's quite serious as it could result in miscommunication".
+
+One recommendation is to "convert the categories to numbers and then do the mapping. That avoids the warning and ensures that the mapping happens exactly the way you want it to."
+
+We are in fact mapping a ordinal categorical variable. Therefore the warning should be ignored. But for the purpose of learning I will change to code so that there is no warning message generated.
+
+:::
+
+In the next two code chunks I am going to convert the categories to numbers (@cnj-05-generate-numbers-for-symbols-categories) and then I will do the mapping (@cnj-05-mapping-numbers-with-symbols-categories).
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-generate-numbers-for-symbols-categories}
+: Generating numbers for discrete classes
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: generate-numbers-for-symbols-categories
+
+okcntrd <- okcntrd |> 
+  dplyr::mutate(tcnt_c2 = dplyr::case_when(
+    tcnt_c1 == "[0,2]"   ~ 1,
+    tcnt_c1 == "(2,5]"   ~ 2,
+    tcnt_c1 == "(5,10]"  ~ 3,
+    tcnt_c1 == "(10,16]" ~ 4,
+    .default = NA
+    )
+  )
+
+
+base::unique((ordered(okcntrd$tcnt_c2)))
+base::class(okcntrd$tcnt_c2)
+
+```
+
+
+
+
+::::
+:::::
+
+The mapping now needs with `ggplot2::scale_size()` a different scale (instead of `ggplot2::scale_size_discrete()`). However, I also need to adapt the legend labels to recover the binned values.
+
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-mapping-numbers-with-symbols-categories}
+: Mapping numbers with symbol categories
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: fig-mapping-symbols-categories2
+#| fig-cap: "Densities of tornadoes in Oklahoma counties from 2016-2021 mapped as a choropleth with four categories with symbols. (Without warning)"
+
+ggplot2::ggplot(data = okcntrd) +
+  ggplot2::geom_sf(ggplot2::aes(size = tcnt_c2)) +
+  ggplot2::scale_size(
+    name = "Tornados",
+    labels = base::levels(okcntrd$tcnt_c1)
+    ) +
+  ggplot2::geom_sf(data = okcounty, fill = NA) +
+  ggplot2::theme_void() +
+  ggplot2::theme(legend.position = "bottom")
 ```
 
 ::::
 :::::
 
-Again I will draw a map to get an idea about the content of the data. Again there are the two methods using `ggplot2::geom_sf()` or `base::plot()`. 
+## Exporting Graphics Output {#sec-05-export-graphics}
+
+Until now the generated maps and charts using {**ggplot2**} are output as HTML and [stored in the file for chapter 5 of my book notes](https://bookdown.org/pbaumgartner/gdswr-notes/05-vector-geospatial-data.html). 
+
+> However, it is often necessary to export maps and other graphics to files and explicitly specify their dimensions and resolution. This is usually the case when generating graphics for publications that must meet specific size and formatting criteria.
+
+The simplest way to do this is with the `ggplot2::ggsave()` function.
 
 ::: {.my-code-collection}
 :::: {.my-code-collection-header}
 ::::: {.my-code-collection-icon}
 :::::
-:::::: {#exm-05-plotting-tutorial-map}
-: Plotting Tutorial Shape File
-::::::
-
-::::
-
-::::{.my-code-collection-container}
-
-::: {.panel-tabset}
-
-###### `ggplot2::geom_sf`
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-plotting-tutorial-map-ggplot2}
-: Plotting Tutorial Map with {**ggplot2**}
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: fig-05-tutorial-map-ggplot2
-#| fig-cap: "Tutorial map plotted with {ggplot2}"
-
-ggplot2::ggplot(data = countries) +
-  ggplot2::geom_sf(fill = NA) +
-  ggplot2::theme_void()
-```
-
-***
-
-`fill = NA` makes the countries transparent.
-
-(To get the same result as in the base R approach I used `ggplot2::theme_void()` to hide the coordinates which is shown in the original book example.) 
-
-::::
-:::::
-
-
-###### `base::plot()`
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-tutorial-map-base-plot}
-: Plotting Tutorial Map with `base::plot()`
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: fig-05-tutorial-map-base-plot
-#| fig-cap: "Tutorial map plotted with base::plot"
-
-graphics::par(mar = c(0, 0, 0, 0))
-base::plot(sf::st_geometry(countries))
-```
-
-***
-
-The countries object has many (168) fields (attributes), but to start with we only need the `geometry` column. Instead of using `base::plot(countries$geometry)` we can obtain `geometry` by using the `sf::st_geometry()` function.
-::::
-:::::
-
-:::
-
-::::
-:::::
-
-### Loading GeoPackage (.gpkg)
-
-The next dataset is rivers (linear geometry) saved in [GeoPackage format](https://www.geopackage.org/). It is loaded in exactly the same way as the shapefile before. 
-
-However, this format can consist of multiple layers of different types. In this case, we must define which layer exactly we want to load. To check what layers are in the geopackage, use the `sf::st_layers()` function, and then specify it using the layer argument in `sf::read_sf()`. If the file only contains one layer, we don’t need to do this.
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-check-layers}
-: Check layers of GeoPackage file
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: check-layers
-
-## get path of r-spatial data
-r_spatial_path = base::paste0(here::here(), "/data/Chapter5/sf_load_save-main/data/")
-
-sf::st_layers(base::paste0(r_spatial_path, "rivers.gpkg"))
-```
-
-
-
-::::
-:::::
-
-We can now load the rivers layers and display the metadata like in the shapefile example.
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-show-rivers-metadata}
-: Load rivers layers and show metadata
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: show-rivers-metadata
-
-(
-  rivers = sf::read_sf(paste0(r_spatial_path, "rivers.gpkg"), layer = "rivers")
-)
-```
-
-
-
-::::
-:::::
-
-Visualizing the rivers data we we will plot this time the rivers against the background of country borders. Adding more layers to the visualization is done with the `add = TRUE` argument in the `base::plot()` function. Note that the order in which objects are added is important – the objects added last are displayed at the top. The `col` argument is used to set the color of the object.
-
-::: {.my-code-collection}
-:::: {.my-code-collection-header}
-::::: {.my-code-collection-icon}
-:::::
-:::::: {#exm-05-plotting-rivers-inside-countries-borders}
-: Plotting rivers inside country borders
-::::::
-
-::::
-
-::::{.my-code-collection-container}
-
-::: {.panel-tabset}
-
-###### base::plot()
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-plotting-rivers-inside-countries-borders-base-plot}
-: Visualizing rivers inside country borders using `base::plot()`
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: plotting-rivers-inside-countries-borders-base-plot
-
-base::plot(sf::st_geometry(countries))
-base::plot(sf::st_geometry(rivers), add = TRUE, col = "blue")
-```
-
-
-::::
-:::::
-
-
-###### ggplot2::geom_sf()
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-plotting-rivers-inside-countries-borders-ggplot2}
-: Visualizing rivers inside country borders using `ggplot2::geom_sf()`
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: plotting-rivers-inside-countries-borders-ggplot2
-#| fig-cap: "Plotting rivers inside countriy borders with {ggplot2}"
-
-ggplot2::ggplot(data = countries) +
-  ggplot2::geom_sf(fill = NA) +
-  ggplot2::geom_sf(data = rivers, color = "blue") +
-  ggplot2::theme_void()
-
-```
-***
-
-Adding more layers to the visualization is done in {ggplot2} as always with the `+` sign.
-
-Note that the map is different (better) sized than the base::plot() example.
-
-
-::::
-:::::
-
-:::
-
-::::
-:::::
-
-***
-
-
-### Loading GeoJSON (.geojson)
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-loading-geojson}
-: Loading GeoJSON cities file
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: load-geojson-file
-
-## get path of r-spatial data
-r_spatial_path = base::paste0(here::here(), "/data/Chapter5/sf_load_save-main/data/")
-
-## load and display the GeoJSON file
-(
-  cities = sf::read_sf(paste0(r_spatial_path, "cities.geojson"))
-)
-```
-
-
-::::
-:::::
-
-The `featurecla` column that indicates the type of city. We want to print them selecting only state capitals.
-
-We can print a column (attribute) in two ways, i.e. by specifying the column name in:
-
-- Single square brackets – a spatial object will be printed
-- Double square brackets (alternatively a dollar sign) – only the text will be printed
-
-
-
-::: {.my-code-collection}
-:::: {.my-code-collection-header}
-::::: {.my-code-collection-icon}
-:::::
-:::::: {#exm-05-print-capitals}
+:::::: {#exm-ID}
 : Title for code collection
 ::::::
 
@@ -1182,176 +1207,192 @@ We can print a column (attribute) in two ways, i.e. by specifying the column nam
 
 ::: {.panel-tabset}
 
-###### cities object
+###### PNG
 
 :::::{.my-r-code}
 :::{.my-r-code-header}
-:::::: {#cnj-05-print-cities-spatial-objects}
-: Print cities as spatial objects
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: print-cities-spatial-objects
-
-cities["featurecla"]
-```
-
-
-::::
-:::::
-
-
-###### cities text
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-print-cities-text}
-: Print cities as text
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: print-cities-text
-#| results: hold
-
-glue::glue("######## Using double square brackets  #############")
-utils::head(cities[["featurecla"]])
-
-glue::glue("")
-glue::glue("############### Using dollar sign ##################")
-utils::head(cities$featurecla)
-```
-
-
-::::
-:::::
-
-###### detect capitals
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-detect-capitals}
-: Detect category for capital cities
+:::::: {#cnj-05-png-export}
+: Output to a portable network graphics (PNG)
 ::::::
 :::
 ::::{.my-r-code-container}
 
-Tab "cities object" shows us that this layer contains 1287 different cities. To find out what types of cities these are, we can use the table() function, which will summarize them.
-
+<center>**Run this code chunk manually to save the PNG graphics only once.**</center>
 
 ```{r}
-#| label: select-capitals
+#| label: png-export
+#| eval: false
 
-base::table(cities$featurecla)
+ggplot2::ggsave("data/Chapter5/tornado.png", 
+       width = 6, 
+       height = 4, 
+       dpi = 300)
+ggplot2::ggsave("data/Chapter5/tornado2.png", 
+       width = 15, 
+       height = 10, 
+       units = "cm", 
+       dpi = 100)
 ```
 
 ***
 
-We are interested in `Admin-0 capital` and `Admin-0 capital alt` types because some countries have two capitals. 
+<center>(*For this R code chunk is no visible output available. However, a file was saved if you have run the code chunk manually.*)</center>
 
+This example exports the most recent output of `ggplot2::ggplot()` to a portable network graphics (PNG) file called `tornado.png` with dimensions of 6 x 4 inches and a resolution of 300 pixels per inch. 
 
+Other units besides inches can be used by specifying the units argument.
 
 ::::
 :::::
 
-###### Select capitals
+
+###### TIFF
 
 :::::{.my-r-code}
 :::{.my-r-code-header}
-:::::: {#cnj-05-select-and-show-capitals}
-: Select and show first ten capital cities
+:::::: {#cnj-05-TIFF-export}
+: Output to a tagged image file format (TIFF)
 ::::::
 :::
 ::::{.my-r-code-container}
+
+<center>**Run this code chunk manually to save the TIFF graphics only once.**</center>
+
 ```{r}
-#| label: select-and-show-capitals
+#| label: TIFF-export
+#| eval: false
 
-(capitals <- cities |> 
-  dplyr::filter(featurecla == "Admin-0 capital" | featurecla == "Admin-0 capital alt") |> 
-  dplyr::select(name))
-  
-```
-***
-
-We are interested in `Admin-0 capital` and `Admin-0 capital alt` types because some countries have two capitals. I filtered the data using the `|` (OR) operator.
-
-I am using the tidyverse approach with the native pipe instead of using base R as in the blog article.
-
-::::
-:::::
-
-
-:::
-
-::::
-:::::
-
-::: {.my-code-collection}
-:::: {.my-code-collection-header}
-::::: {.my-code-collection-icon}
-:::::
-:::::: {#exm-05-plot-africa-complete}
-: Plot Africa with rivers and capitals
-::::::
-
-::::
-
-::::{.my-code-collection-container}
-
-::: {.panel-tabset}
-
-###### `base::plot()`
-
-:::::{.my-r-code}
-:::{.my-r-code-header}
-:::::: {#cnj-05-base-plot-africa}
-: Visualize African borders with rivers and capitals using `base::plot()`
-::::::
-:::
-::::{.my-r-code-container}
-```{r}
-#| label: base-plot-africa
-
-base::plot(sf::st_geometry(countries), main = "Africa", axes = TRUE, bgc = "deepskyblue",
-     col = "burlywood")
-base::plot(sf::st_geometry(rivers), add = TRUE, col = "blue")
-base::plot(sf::st_geometry(capitals), add = TRUE, pch = 24, bg = "red", cex = 0.8)
+ggplot2::ggsave("data/Chapter5/tornado.tiff", 
+       width = 6, 
+       height = 4, 
+       dpi = 300, 
+       compression = "lzw")
 ```
 
 ***
 
-In the last step, we prepare the final visualization. We can add a title (main argument), axes (axes argument) and change the background color (bgc argument) of the figure. We can also change the point symbol (pch argument), set its size (cex argument) and fill color (bg argument).
+<center>(*For this R code chunk is no visible output available. However, a file was saved if you have run the code chunk manually.*)</center>
 
+When saving a TIFF, a compression type can be specified.
 
 ::::
 :::::
 
-
-###### `ggplot2::geom_sf()`
+###### JPEG
 
 :::::{.my-r-code}
 :::{.my-r-code-header}
-:::::: {#cnj-05-ggplot2-africa}
-: Visualize African borders with rivers and capitals
+:::::: {#cnj-05-JPEG-export}
+: Output to a Joint Photographic Experts Group file format (JPEG)
 ::::::
 :::
 ::::{.my-r-code-container}
-```{r}
-#| label: ggplot2-africa
-#| fig-cap: "Africa"
 
-ggplot2::ggplot(data = countries) +
-  ggplot2::geom_sf(fill = "burlywood") +
-  ggplot2::geom_sf(data = rivers, color = "blue") +
-  ggplot2::geom_sf(data = capitals, fill = "red", shape = 24) +
-  ggplot2::theme(
-    panel.background = ggplot2::element_rect(fill = "deepskyblue",
-                                color = "deepskyblue")
+<center>**Run this code chunk manually to save the JPEG graphics only once.**</center>
+
+```{r}
+#| label: JPEG-export
+#| eval: false
+
+ggplot2::ggsave("tornado.jpeg", 
+       width = 6, 
+       height = 4, 
+       dpi = 300, 
+       quality = 90)
+```
+
+***
+
+<center>(*For this R code chunk is no visible output available. However, a file was saved if you have run the code chunk manually.*)</center>
+
+When saving a JPEG, a compression type can be specified.
+
+::::
+:::::
+
+###### PDF
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-PDF-export}
+: Output to a Portable Document Format file format (PDF)
+::::::
+:::
+::::{.my-r-code-container}
+
+<center>**Run this code chunk manually to save the PDF graphics only once.**</center>
+
+```{r}
+#| label: PDF-export
+#| eval: false
+
+ggplot2::ggsave(
+  "data/Chapter5/tornado.pdf", 
+   width = 6, 
+   height = 4
   )
 ```
 
+***
 
+<center>(*For this R code chunk is no visible output available. However, a file was saved if you have run the code chunk manually.*)</center>
+
+When saving a PDF, the `dpi` argument is ignored.
+
+::::
+:::::
+
+###### R Object
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-R-object-export}
+: Output to an R object
+::::::
+:::
+::::{.my-r-code-container}
+
+<center>**Run this code chunk manually to save the R objects only once.**</center>
+
+```{r}
+#| label: R-object-export
+#| eval: false
+
+choropleth <- ggplot2::ggplot(data = countymap) +
+  ggplot2::geom_sf(ggplot2::aes(fill = tdens_c1)) +
+  ggplot2::scale_fill_brewer(name = "Density",   
+                    palette = "YlOrRd") +
+  ggplot2::theme_void()
+
+gradsymbol <- ggplot2::ggplot(data = okcntrd) +
+  ggplot2::geom_sf(ggplot2::aes(size = tcnt_c2)) +
+  ggplot2::scale_size(
+    name = "Count",
+    labels = base::levels(okcntrd$tcnt_c1)
+    ) +
+  ggplot2::geom_sf(data = okcounty, fill = NA) +
+  ggplot2::theme_void()
+
+ggplot2::ggsave("data/Chapter5/choropleth.tiff", 
+       plot = choropleth,
+       width = 6, 
+       height = 4, 
+       dpi = 300, 
+       compression = "lzw")
+
+ggplot2::ggsave("data/Chapter5/gradsymbol.tiff",
+       plot = gradsymbol,
+       width = 6, 
+       height = 4, 
+       dpi = 300, 
+       compression = "lzw")
+```
+
+***
+
+<center>(*For this R code chunk is no visible output available. However, a file was saved if you have run the code chunk manually.*)</center>
+
+The output of `ggplot2::ggplot()` can also be saved as an R object that can be output to graphics files using `ggplot2::ggsave()`. The `plot` argument is used to specify the ggplot object to be saved.
 
 ::::
 :::::
@@ -1360,6 +1401,80 @@ ggplot2::ggplot(data = countries) +
 
 ::::
 :::::
+
+There are several options to combine saved graphs and maps into a composite figure:
+
+- **Base R** with the `graphics::par()` function using `mfrow` or `mfcol` as parameters.
+- **{**ggpubr**} package** using the `ggpubr::ggarrange()` function [@ggpubr].
+- **{**patchwork**} package** using very flexible arrangements with plot arithmetic +, -, |, *, & [@patchwork].
+- **{**cowplot**} package** with the `cowplot::plot_grid()` function [@cowplot].
+
+I am going to demonstratge here just the last possibility as is this the example used in the book.
+
+:::::{.my-r-code}
+:::{.my-r-code-header}
+:::::: {#cnj-05-save-combined-graphs}
+: Save combined graphics with the {**cowplot**} package
+::::::
+:::
+::::{.my-r-code-container}
+```{r}
+#| label: base-r-saved-combined-graphs
+
+choropleth <- ggplot2::ggplot(data = countymap) +
+  ggplot2::geom_sf(ggplot2::aes(fill = tdens_c1)) +
+  ggplot2::scale_fill_brewer(name = "Density",   
+                    palette = "YlOrRd") +
+  ggplot2::theme_void()
+
+gradsymbol <- ggplot2::ggplot(data = okcntrd) +
+  ggplot2::geom_sf(ggplot2::aes(size = tcnt_c2)) +
+  ggplot2::scale_size(
+    name = "Count",
+    labels = base::levels(okcntrd$tcnt_c1)
+    ) +
+  ggplot2::geom_sf(data = okcounty, fill = NA) +
+  ggplot2::theme_void()
+
+cowplot::plot_grid(choropleth, gradsymbol, 
+          labels = c("\n\nA) Choropleth Map", 
+                     "\n\nB) Graduated Symbols",
+                     label_size = 12),
+          ncol = 1, 
+          hjust = 0, 
+          label_x = 0, 
+          align = "hv")
+```
+
+
+
+::::
+:::::
+
+
+
+
+
+The `cowplot::plot_grid()` function provides a variety of options for arranging figures in a regular grid. This basic example provides a label for each subplot and specifies additional arguments to plot the maps in a single column, justify the labels, move the labels besides each map, and align the maps horizontally and vertically, so they are exactly the same size.
+
+## Resources {#sec-05-resources}
+
+:::::{.my-resource}
+:::{.my-resource-header}
+:::::: {#lem-05-resources}
+: Additional resources for working with the {**sf**} package
+::::::
+:::
+::::{.my-resource-container}
+
+- A variety of additional resources for working with the sf package can be found at https://r-spatial.github.io/sf/index.html. These include a link to the sf “cheatsheet” as well as a variety of articles, vignettes, and blog posts that provide additional examples of how to work with vector geospatial data using this package. 
+  - A rather comrehensive overview about loading and saving  datasets of different formats is explained in the blog article [How to load and save vector data in R](https://r-spatial.org/r/2024/06/26/sf-load-save.html). I will follow the tutorial in this article in @sec-annex-a.
+- The book Geocomputation with R by Robin Lovelace and others [@lovelace-2020] is also an excellent reference that encompasses {**sf**} as well as many other R packages for working with geospatial data. Look for their forthcoming second edition [@lovelace-2025], which is already [online](https://r.geocompx.org/) for the most up-to-date information on geospatial data processing with R.
+- A more pressing knowledge for me is to learn how to get vector map data for creating maps. I am following here the tutorial by [@felixanalytix-2023] in @sec-annex-b.
+
+::::
+:::::
+
 
 
 

@@ -22,8 +22,9 @@ book:
     - 04-dates-in-R.qmd
     - 05-vector-geospatial-data.qmd
   appendices:
-    - 90-austria-data.qmd
+    - 90-sf-load-save.qmd
     - 91-creating-maps.qmd
+    - 95-austrian-data.qmd
 
 bibliography:
     - references.bib

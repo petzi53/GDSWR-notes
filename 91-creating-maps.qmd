@@ -14,7 +14,6 @@ knitr:
 
 base::source(file = "R/helper.R")
 ggplot2::theme_set(ggplot2::theme_bw())
-options(show.signif.stars = FALSE)
 
 ```
 
@@ -533,6 +532,8 @@ Using the {**ggplot2**} R package, we will create a world map with the
 function `ggplot2::geom_sf()`. We will also make the square root
 transformation to see more clearly the percentage differences.
 
+
+
 :::::: my-r-code
 :::: my-r-code-header
 ::: {#cnj-annex-b-world-map-2023}
@@ -580,6 +581,7 @@ world_moll |>
         
 ```
 
+
 ------------------------------------------------------------------------
 
 The two data frames are joined by the ISO-alpha3 codes that have
@@ -595,6 +597,8 @@ Without splitting the caption text it would be too long to fit into one
 line.
 :::
 ::::::
+
+
 
 ## Zooming into a specific area
 
